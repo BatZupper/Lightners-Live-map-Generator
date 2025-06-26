@@ -1,4 +1,4 @@
-import { createFFmpeg, fetchFile } from './ffmpeg/ffmpeg.min.js';
+import { createFFmpeg, fetchFile } from './ffmpeg-core/ffmpeg.min.js';
 
 // Variabile globale ffmpeg
 const ffmpeg = createFFmpeg({
