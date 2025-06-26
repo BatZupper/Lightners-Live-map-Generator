@@ -84,3 +84,8 @@ label#midi-auto-label{
 	font-weight: normal;
 	margin-left: 5px;
 }
+
+input#midi-file{
+    margin-bottom: 23px;
+    margin-left: -17px;
+}
