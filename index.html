@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Lightners Live Chart Generator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Lightners Live Chart Generator</h1>
+  
+  <div class="form-group">
+    <label for="mod-name">Nome Mod:</label>
+    <input id="mod-name" placeholder="Es. MyAwesomeSong" />
+  </div>
+  
+  <div class="form-group">
+    <label for="order">Order:</label>
+    <input id="order" placeholder="Es. 320" />
+  </div>
+  
+  <div class="form-group">
+    <label for="difficulty">Difficulty:</label>
+    <input id="difficulty" placeholder="Es. Hard" />
+  </div>
+  
+  <div class="form-group">
+    <label for="description">Description:</label>
+    <input id="description" placeholder="Descrizione della canzone" />
+  </div>
+  
+  <div class="form-group">
+    <label for="composer">Composer:</label>
+    <input id="composer" placeholder="Autore della canzone" />
+  </div>
+  
+  <div class="form-group">
+    <label for="volume">Volume:</label>
+    <input id="volume" placeholder="Es. 0" value="0" />
+  </div>
+  
+  <div class="form-group">
+    <label for="audio">File Audio (MP3, WAV, etc.):</label>
+    <input type="file" id="audio" accept="audio/*" />
+  </div>
+  
+  <div class="form-group">
+    <label for="image">Immagine di copertina (PNG/JPG):</label>
+    <input type="file" id="image" accept="image/png, image/jpeg" />
+  </div>
+  
+  <div class="form-group">
+    <div class="radio-group">
+      <label>MIDI:</label><br>
+      <input type="radio" id="midi-auto" name="midi-type" value="auto" checked>
+      <label for="midi-auto">Genera automaticamente</label><br>
+      <input type="radio" id="midi-custom" name="midi-type" value="custom">
+      <label for="midi-custom">Carica MIDI personalizzato</label>
+    </div>
+    <input type="file" id="midi-file" accept=".mid" style="display: none;" />
+  </div>
+  
+  <div class="form-group">
+    <button id="generate">Genera ZIP</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.0/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <script src="midifilewriter.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
