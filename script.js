@@ -1,42 +1,41 @@
-const { createFFmpeg, fetchFile } = FFmpeg;
+import { createFFmpeg, fetchFile } from './ffmpeg/ffmpeg.min.js';
 
+// Variabile globale ffmpeg
 const ffmpeg = createFFmpeg({
   log: true,
-  corePath: './ffmpeg-core/ffmpeg-core.js',
-  workerPath: './ffmpeg-core/ffmpeg-core.worker.js'
+  corePath: './ffmpeg/ffmpeg-core.js',
+  workerPath: './ffmpeg/ffmpeg-core.worker.js',
 });
 
-
-const generateBtn = document.getElementById("generate");
+async function loadFFmpeg() {
+  if (!ffmpeg.isLoaded()) {
+    await ffmpeg.load();
+  }
+}
 
 async function convertToMP3(file) {
   try {
-    if (!ffmpeg.isLoaded()) {
-      await ffmpeg.load();
-    }
-    
-    // Scrivi il file nell'FS di FFmpeg
+    await loadFFmpeg();
+
     const inputName = 'input_' + Math.random().toString(36).substring(2);
     await ffmpeg.FS('writeFile', inputName, await fetchFile(file));
-    
-    // Esegui la conversione
+
     await ffmpeg.run(
-      '-i', inputName, 
-      '-vn',           // No video
-      '-ar', '44100',  // Frequenza campionamento
-      '-ac', '2',      // Canali stereo
-      '-b:a', '192k',  // Bitrate audio
-      '-y',            // Sovrascrivi senza chiedere
+      '-i', inputName,
+      '-vn',
+      '-ar', '44100',
+      '-ac', '2',
+      '-b:a', '192k',
+      '-y',
       'output.mp3'
     );
-    
-    // Leggi il risultato
+
     const data = ffmpeg.FS('readFile', 'output.mp3');
-    
-    // Pulisci i file temporanei
+
+    // Pulizia
     ffmpeg.FS('unlink', inputName);
     ffmpeg.FS('unlink', 'output.mp3');
-    
+
     return data;
   } catch (error) {
     console.error('Errore conversione FFmpeg:', error);
@@ -44,47 +43,45 @@ async function convertToMP3(file) {
   }
 }
 
+// --- Funzioni per MIDI (usa MIDIfw come nel tuo esempio)
+
 function createSimpleMidi(durationSeconds) {
-  // Calcoliamo il tempo in base alla durata (120 BPM per default)
   const bpm = 120;
   const ticksPerBeat = 96;
   const ticksPerSecond = ticksPerBeat / (60 / bpm);
   const totalTicks = Math.round(durationSeconds * ticksPerSecond);
-  
-  // Creiamo la traccia MIDI
+
   const track = MIDIfw.createTrack();
-  
-  // Aggiungiamo le due note lunghe (C4 e E4)
+
   const note1Start = 0;
   const note2Start = 0;
   const noteDuration = totalTicks;
-  
-  // Nota 1 (C4)
+
   track.noteOn({ time: note1Start, note: 'C4', velocity: 100 });
   track.noteOff({ time: noteDuration, note: 'C4' });
-  
-  // Nota 2 (E4)
+
   track.noteOn({ time: note2Start, note: 'E4', velocity: 100 });
   track.noteOff({ time: noteDuration, note: 'E4' });
-  
-  // Creiamo il file MIDI
+
   const midiFile = MIDIfw.createFile({
-    ticksPerBeat: ticksPerBeat,
-    tempo: bpm
+    ticksPerBeat,
+    tempo: bpm,
   });
-  
+
   midiFile.addTrack(track);
-  
+
   return midiFile.getBytes();
 }
 
-// Gestione selezione MIDI
+// Mostra/nascondi upload MIDI personalizzato
 document.querySelectorAll('input[name="midi-type"]').forEach(radio => {
   radio.addEventListener('change', function() {
-    document.getElementById('midi-file').style.display = 
+    document.getElementById('midi-file').style.display =
       this.value === 'custom' ? 'block' : 'none';
   });
 });
+
+const generateBtn = document.getElementById("generate");
 
 generateBtn.addEventListener("click", async () => {
   const modName = (document.getElementById("mod-name").value || "").trim();
@@ -97,7 +94,7 @@ generateBtn.addEventListener("click", async () => {
     alert("Inserisci un nome per la mod.");
     return;
   }
-  
+
   if (!audioFile) {
     alert("Seleziona un file audio.");
     return;
@@ -113,7 +110,7 @@ generateBtn.addEventListener("click", async () => {
     return;
   }
 
-  // Converti audio a mp3 se necessario
+  // Conversione audio in MP3 (se serve)
   let mp3Data;
   if (audioFile.type === "audio/mpeg") {
     mp3Data = new Uint8Array(await audioFile.arrayBuffer());
@@ -132,10 +129,10 @@ generateBtn.addEventListener("click", async () => {
     }
   }
 
-  // Ottieni la durata dell'audio (solo se serve generare il MIDI)
+  // Durata audio e creazione MIDI automatico
   let audioDuration;
   let midiData;
-  
+
   if (midiType === 'auto') {
     try {
       audioDuration = await new Promise((resolve, reject) => {
@@ -149,8 +146,7 @@ generateBtn.addEventListener("click", async () => {
           URL.revokeObjectURL(audio.src);
         });
       });
-      
-      // Crea il MIDI automatico
+
       midiData = createSimpleMidi(audioDuration);
       if (!midiData) {
         alert("Errore nella creazione del file MIDI.");
@@ -168,22 +164,18 @@ generateBtn.addEventListener("click", async () => {
     midiData = new Uint8Array(await customMidiFile.arrayBuffer());
   }
 
-  // Prepara il file ZIP
+  // Crea ZIP
   const zip = new JSZip();
   const folder = zip.folder(modName);
 
-  // Aggiungi MP3
   folder.file(`${modName}.mp3`, mp3Data);
 
-  // Aggiungi immagine
   const imgExt = imageFile.type.split('/')[1];
   const imgData = new Uint8Array(await imageFile.arrayBuffer());
   folder.file(`${modName}.${imgExt}`, imgData);
 
-  // Aggiungi MIDI
   folder.file(`${modName}.mid`, midiData);
 
-  // Aggiungi metadati
   const metadata = {
     order: (document.getElementById("order").value || "0").trim(),
     difficulty: (document.getElementById("difficulty").value || "Normal").trim(),
@@ -191,14 +183,13 @@ generateBtn.addEventListener("click", async () => {
     composer: (document.getElementById("composer").value || "Unknown").trim(),
     volume: (document.getElementById("volume").value || "0").trim(),
   };
-  
+
   const formattedMeta = Object.entries(metadata)
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n");
-  
+
   folder.file(`${modName}.txt`, formattedMeta);
 
-  // Genera e scarica il ZIP
   try {
     generateBtn.textContent = "Creazione archivio...";
     const content = await zip.generateAsync({ type: "blob" });
@@ -216,3 +207,6 @@ generateBtn.addEventListener("click", async () => {
     generateBtn.disabled = false;
   }
 });
+
+// Carica ffmpeg all'inizio per velocizzare
+loadFFmpeg();
