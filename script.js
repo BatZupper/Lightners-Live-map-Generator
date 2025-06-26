@@ -2,9 +2,10 @@ const { createFFmpeg, fetchFile } = FFmpeg;
 
 const ffmpeg = createFFmpeg({
   log: true,
-  corePath: 'https://unpkg.com/@ffmpeg/core@0.10.1/dist/ffmpeg-core.js',
-  workerPath: 'https://unpkg.com/@ffmpeg/core@0.10.1/dist/ffmpeg-core.worker.js'
+  corePath: './ffmpeg-core/ffmpeg-core.js',
+  workerPath: './ffmpeg-core/ffmpeg-core.worker.js'
 });
+
 
 const generateBtn = document.getElementById("generate");
 
