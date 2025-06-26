@@ -1,50 +1,3 @@
-import { createFFmpeg, fetchFile } from './ffmpeg-core/ffmpeg-core.js';
-
-// Variabile globale ffmpeg
-const ffmpeg = createFFmpeg({
-  log: true,
-  corePath: './ffmpeg/ffmpeg-core.js',
-  workerPath: './ffmpeg/ffmpeg-core.worker.js',
-});
-
-async function loadFFmpeg() {
-  if (!ffmpeg.isLoaded()) {
-    await ffmpeg.load();
-  }
-}
-
-async function convertToMP3(file) {
-  try {
-    await loadFFmpeg();
-
-    const inputName = 'input_' + Math.random().toString(36).substring(2);
-    await ffmpeg.FS('writeFile', inputName, await fetchFile(file));
-
-    await ffmpeg.run(
-      '-i', inputName,
-      '-vn',
-      '-ar', '44100',
-      '-ac', '2',
-      '-b:a', '192k',
-      '-y',
-      'output.mp3'
-    );
-
-    const data = ffmpeg.FS('readFile', 'output.mp3');
-
-    // Pulizia
-    ffmpeg.FS('unlink', inputName);
-    ffmpeg.FS('unlink', 'output.mp3');
-
-    return data;
-  } catch (error) {
-    console.error('Errore conversione FFmpeg:', error);
-    throw error;
-  }
-}
-
-// --- Funzioni per MIDI (usa MIDIfw come nel tuo esempio)
-
 function createSimpleMidi(durationSeconds) {
   const bpm = 120;
   const ticksPerBeat = 96;
@@ -73,7 +26,7 @@ function createSimpleMidi(durationSeconds) {
   return midiFile.getBytes();
 }
 
-// Mostra/nascondi upload MIDI personalizzato
+// Show/hide custom MIDI upload input
 document.querySelectorAll('input[name="midi-type"]').forEach(radio => {
   radio.addEventListener('change', function() {
     document.getElementById('midi-file').style.display =
@@ -91,45 +44,29 @@ generateBtn.addEventListener("click", async () => {
   const customMidiFile = document.getElementById("midi-file").files?.[0];
 
   if (!modName) {
-    alert("Inserisci un nome per la mod.");
+    alert("Please enter a mod name.");
     return;
   }
 
   if (!audioFile) {
-    alert("Seleziona un file audio.");
+    alert("Please select an audio file.");
     return;
   }
 
   if (!imageFile) {
-    alert("Seleziona un'immagine di copertina.");
+    alert("Please select a cover image.");
     return;
   }
 
   if (!["image/jpeg", "image/png"].includes(imageFile.type)) {
-    alert("Solo immagini JPG o PNG supportate.");
+    alert("Only JPG or PNG images are supported.");
     return;
   }
 
-  // Conversione audio in MP3 (se serve)
-  let mp3Data;
-  if (audioFile.type === "audio/mpeg") {
-    mp3Data = new Uint8Array(await audioFile.arrayBuffer());
-  } else {
-    try {
-      generateBtn.disabled = true;
-      generateBtn.textContent = "Conversione audio in corso...";
-      mp3Data = await convertToMP3(audioFile);
-      generateBtn.textContent = "Genera ZIP";
-      generateBtn.disabled = false;
-    } catch (e) {
-      alert("Errore nella conversione audio: " + e.message);
-      generateBtn.textContent = "Genera ZIP";
-      generateBtn.disabled = false;
-      return;
-    }
-  }
+  // Read audio as Uint8Array (no conversion)
+  const mp3Data = new Uint8Array(await audioFile.arrayBuffer());
 
-  // Durata audio e creazione MIDI automatico
+  // Get audio duration and create MIDI automatically if needed
   let audioDuration;
   let midiData;
 
@@ -149,22 +86,22 @@ generateBtn.addEventListener("click", async () => {
 
       midiData = createSimpleMidi(audioDuration);
       if (!midiData) {
-        alert("Errore nella creazione del file MIDI.");
+        alert("Error creating MIDI file.");
         return;
       }
     } catch (e) {
-      alert("Errore nel calcolo della durata audio: " + e.message);
+      alert("Error calculating audio duration: " + e.message);
       return;
     }
   } else {
     if (!customMidiFile) {
-      alert("Seleziona un file MIDI personalizzato.");
+      alert("Please select a custom MIDI file.");
       return;
     }
     midiData = new Uint8Array(await customMidiFile.arrayBuffer());
   }
 
-  // Crea ZIP
+  // Create ZIP
   const zip = new JSZip();
   const folder = zip.folder(modName);
 
@@ -191,7 +128,7 @@ generateBtn.addEventListener("click", async () => {
   folder.file(`${modName}.txt`, formattedMeta);
 
   try {
-    generateBtn.textContent = "Creazione archivio...";
+    generateBtn.textContent = "Creating archive...";
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(content);
@@ -201,12 +138,9 @@ generateBtn.addEventListener("click", async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
   } catch (e) {
-    alert("Errore nella creazione dell'archivio: " + e.message);
+    alert("Error creating ZIP archive: " + e.message);
   } finally {
-    generateBtn.textContent = "Genera ZIP";
+    generateBtn.textContent = "Generate ZIP";
     generateBtn.disabled = false;
   }
 });
-
-// Carica ffmpeg all'inizio per velocizzare
-loadFFmpeg();
