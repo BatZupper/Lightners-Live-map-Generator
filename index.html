@@ -47,13 +47,12 @@
     <label for="image">Cover Image (PNG/JPG):</label>
     <input type="file" id="image" accept="image/png, image/jpeg" />
   </div>
-
-  <div class="form-group">
-    <label>MIDI:</label><br />
+  <label id="midi-label">MIDI:</label>
+  <div class="form-group" id="midi">
     <input type="radio" id="midi-auto" name="midi-type" value="auto" checked />
-    <label for="midi-auto">Generate Automatically</label><br />
+    <label for="midi-auto" id="midi-auto-label">Generate Automatically</label><br />
     <input type="radio" id="midi-custom" name="midi-type" value="custom" />
-    <label for="midi-custom">Upload Custom MIDI</label><br />
+    <label for="midi-custom" id="midi-custom-label">Upload Custom MIDI</label><br />
     <input type="file" id="midi-file" accept=".mid" style="display: none;" />
   </div>
 
